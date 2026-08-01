@@ -1,0 +1,29 @@
+[package]
+name = "natsort_port"
+version = "0.1.0"
+edition = "2021"
+description = "A Rust port of the Python natsort library (natural sort ordering)."
+license = "MIT"
+
+[lib]
+name = "natsort_core"
+path = "src/lib.rs"
+crate-type = ["cdylib", "rlib"]
+
+[[bin]]
+name = "natsort_port"
+path = "src/main.rs"
+
+[dependencies]
+unicode-normalization = "0.1"
+wasm-bindgen = { version = "0.2", optional = true }
+
+[features]
+wasm = ["wasm-bindgen"]
+
+
+[dev-dependencies]
+proptest = "=1.2.0"
+
+[profile.release]
+opt-level = 3

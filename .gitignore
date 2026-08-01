@@ -1,0 +1,7 @@
+/target
+/web/pkg
+**/__pycache__/
+**/.pytest_cache/
+*.pyc
+*.profraw
+Cargo.lock.bak
