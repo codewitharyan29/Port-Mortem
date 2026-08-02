@@ -1,0 +1,17 @@
+# Benchmark: natsort-rust vs Python natsort 8.4.0
+# workload: 50000 filename-like strings | 15 runs (+2 warmup, discarded)
+
+Python   mean= 537736.3us  p50= 533149.6us  p95= 560213.4us  p99= 586311.9us
+Rust     mean=  78508.2us  p50=  78257.0us  p95=  80401.4us  p99=  80517.9us
+
+Speedup (mean):  6.85x
+Speedup (p99):   7.28x
+
+Rust peak RSS:   27.0 MB
+Python peak RSS: 31.7 MB  (interpreter + this process, not isolated)
+
+Note: this benchmarks natsort's SORTING step only (both sides call
+natsorted-equivalent logic on identical input); it does not include
+process startup, which favors Python here since Rust pays a fresh
+process-spawn cost per run via subprocess. A single long-running
+Rust process (as a library) would not pay this cost repeatedly.

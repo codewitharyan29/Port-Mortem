@@ -1,0 +1,3 @@
+tests/test_natsorted_convenience.py::test_order_by_index_sorts_list_according_to_order_of_integer_list PASSED [ 95%]
+tests/test_natsorted_convenience.py::test_order_by_index_returns_generator_with_iter_true PASSED [100%]
+====================== 24 passed, 39 deselected in 0.09s =======================

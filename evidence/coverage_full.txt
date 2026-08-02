@@ -1,0 +1,27 @@
+# Full crate coverage breakdown (cargo llvm-cov --release --summary-only)
+# Measured 2026-08-01, Windows 11, Rust stable via rustup.
+
+Filename                      Regions    Missed Regions     Cover   Functions  Missed Functions  Executed       Lines      Missed Lines     Cover    Branches   Missed Branches     Cover
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+casefold.rs                       301               297     1.33%          1                 0   100.00%         301       297     1.33%           0                 0         -
+lib.rs                           1040                89    91.44%         94                 7    92.55%         513        44    91.42%           0                 0         -
+main.rs                           270               140    48.15%         15                 3    80.00%         127        54    57.48%           0                 0         -
+unicode_digits.rs                  28                 0   100.00%          6                 0   100.00%          21         0   100.00%           0                 0         -
+unicode_numeric.rs                 12                 0   100.00%          3                 0   100.00%           9         0   100.00%           0                 0         -
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+TOTAL                             1651               526    68.14%        119                10    91.60%         971       395    59.32%           0                 0         -
+
+# Interpretation (see DECISIONS.md #26 for the full explanation):
+# - lib.rs 91.44%/91.42% -- the core algorithm, matches the README's "91%" claim exactly.
+# - main.rs 48.15%/57.48% -- CLI dispatch is exercised externally by cli_difftest.py
+#   (2,800 subprocess invocations) and mutation_test.py, which cargo-llvm-cov cannot
+#   see because it only instruments the `cargo test` process, not subprocess children.
+# - casefold.rs 1.33%/1.33% -- a 297-arm generated lookup table (str.casefold() vs
+#   str.lower() exceptions). A handful of native unit tests exercise a few entries
+#   directly; the other 290+ are validated behaviorally, not line-by-line, via
+#   differential fuzzing against Python's real casefold() output (fuzz/harness.py's
+#   EDGE list and fuzz/harness_60s.py's ALPHABET both include casefold-special chars).
+#   Hand-writing 297 individual unit tests would duplicate the table itself with no
+#   real verification value; differential testing IS the correct strategy here.
+# - unicode_digits.rs / unicode_numeric.rs 100% -- small binary-search functions,
+#   fully exercised by the native unit tests directly.
