@@ -370,3 +370,25 @@
     is correct). The NOEXP and PRESORT additions from decision #32 are
     unaffected and remain in place; only this one specific test's exclusion
     was reverted.
+
+36. **Fixed a silently-broken WASM deployment: the workflow reported "success"
+    while actually deploying a 404.** The live GitHub Pages demo showed the
+    "module not found" warning and a browser console 404 for
+    `pkg/natsort_core.js`, despite the "Deploy web demo" Actions run being
+    green. Root cause: `deploy-web.yml` installed `wasm-pack` via
+    `curl | sh` inside a multi-line `run:` block. When that install silently
+    failed (network hiccup, script change, or similar), the *next* commands
+    in the same block (`rustup target add ...`) still succeeded on their own,
+    so the step's overall exit code was 0 -- masking the real failure. The
+    separate "Build WASM demo" step should then have failed loudly with
+    "wasm-pack: command not found", but evidently didn't fail the job
+    visibly enough to be noticed as the actual problem. Fixed by: (a)
+    installing wasm-pack via `cargo install wasm-pack --locked`, which fails
+    loudly and unambiguously on its own step if it doesn't work; (b) adding
+    `set -e` to every multi-line run block so any failing command stops the
+    step immediately; (c) an explicit "Verify WASM artifacts exist" step
+    that checks for `natsort_core.js` and `natsort_core_bg.wasm` with `test
+    -f` and fails the job outright if either is missing, rather than
+    silently uploading and deploying an incomplete `web/` directory. Also
+    added `web/.nojekyll` as a defensive measure against GitHub Pages'
+    Jekyll processor interfering with any current or future files.

@@ -17,13 +17,32 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
-      - name: Set up Rust + wasm
+      - name: Set up Rust + wasm target
         run: |
+          set -e
           rustup toolchain install stable
           rustup target add wasm32-unknown-unknown
-          curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
+      - name: Install wasm-pack
+        # `cargo install` fails loudly (non-zero exit) if it doesn't work,
+        # unlike a `curl | sh` installer script whose failure can be masked
+        # inside a multi-line run block -- this was silently producing no
+        # wasm-pack binary, so "Build WASM demo" never actually ran,
+        # yet the job still reported success (a fragile install method
+        # papering over a real failure, not a real green build).
+        run: cargo install wasm-pack --locked
       - name: Build WASM demo
-        run: wasm-pack build --target web --out-dir web/pkg --out-name natsort_port -- --features wasm
+        run: |
+          set -e
+          wasm-pack build --target web --out-dir web/pkg --out-name natsort_core -- --features wasm
+      - name: Verify WASM artifacts exist
+        # Fail the job explicitly and loudly if the build didn't actually
+        # produce what index.html expects, instead of deploying a broken
+        # site that "succeeds" at the workflow level.
+        run: |
+          test -f web/pkg/natsort_core.js
+          test -f web/pkg/natsort_core_bg.wasm
+          echo "WASM artifacts present:"
+          ls -la web/pkg/
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
