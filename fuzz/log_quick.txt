@@ -1,0 +1,2 @@
+RESULT: per-algorithm divergences: {'int': 0, 'real': 0, 'signed': 0, 'float': 0, 'ignorecase': 0, 'lowercasefirst': 0, 'groupletters': 0}
+TOTAL DIVERGENCES: 0

@@ -1,0 +1,9 @@
+# Differential Fuzz Survivor -- continuous run
+# target: 5s minimum, shared public API (natsorted vs `natsort_port batch-sort`)
+# seed=20260731 | started=2026-08-01 15:27:05 UTC
+  ...2s elapsed, 1400 comparisons, 0 divergences
+  ...4s elapsed, 2800 comparisons, 0 divergences
+
+RESULT: 5.0s continuous run (>= 5s required)
+  rounds=508  comparisons=3556  per-algorithm={'int': 0, 'real': 0, 'signed': 0, 'float': 0, 'ignorecase': 0, 'lowercasefirst': 0, 'groupletters': 0}
+  TOTAL DIVERGENCES: 0
