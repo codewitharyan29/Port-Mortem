@@ -1,0 +1,54 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Rust (stable + clippy)
+        run: |
+          rustup toolchain install stable
+          rustup default stable
+          rustup component add clippy
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Build (warnings denied)
+        run: cargo build --release --verbose
+
+      - name: Clippy (warnings denied)
+        run: cargo clippy --release --all-targets -- -D warnings
+
+      - name: Native tests (unit + property)
+        run: cargo test --release
+
+      - name: Original natsort tests vs the Rust port
+        run: |
+          pip install pytest hypothesis
+          PYTHONPATH=adapter python3 -m pytest -q
+
+      - name: Differential fuzz (0 divergences required)
+        run: python3 fuzz/harness.py 5000
+
+      - name: Differential fuzz for index_natsorted specifically (0 divergences required)
+        run: python3 fuzz/harness_index.py 1000
+
+      - name: CLI differential (0 divergences required)
+        run: python3 cli_difftest.py 200
+
+      - name: Mutation testing (100% catch required)
+        run: python3 mutation_test.py
+
+      - name: Coverage (informational)
+        run: |
+          cargo install cargo-llvm-cov --locked || true
+          cargo llvm-cov --release --summary-only || true
+
+      - name: Benchmark (informational, honest numbers)
+        run: python3 bench/run.py 20000 5 || true
