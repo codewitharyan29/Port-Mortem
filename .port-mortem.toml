@@ -1,0 +1,36 @@
+# Metadata for Port Mortem: Code Resurrection 2026, Wave 2 (Hackathon Raptors)
+
+[submission]
+track = "D"
+track_name = "Python -> Rust (The Astral playbook)"
+source_repo = "https://github.com/SethMMorton/natsort"
+source_language = "Python"
+source_version = "8.4.0"
+target_language = "Rust"
+port_repo = "https://github.com/codewitharyan29/Port-Mortem"
+
+[kickoff]
+# Original test suite hashed at kickoff; see evidence/original_tests.sha256
+# and tests/original/ for the verbatim, unmodified files.
+sha256_manifest = "evidence/original_tests.sha256"
+
+[bonus_claims]
+differential_fuzz_survivor = true   # fuzz/log.txt: 60.0s continuous, 0 divergences
+zero_unsafe = true                  # #![forbid(unsafe_code)] crate-wide
+bug_catcher = true                  # https://github.com/SethMMorton/natsort/issues/192
+decision_log = true                 # DECISIONS.md: 20 documented decisions
+
+[scope]
+# Documented boundary, not silently omitted -- see README.md "Unicode: full
+# parity" and pytest.ini deselection reasons.
+in_scope = [
+  "ASCII + full Unicode decimal-digit natural sorting",
+  "INT, REAL, FLOAT, SIGNED, IGNORECASE, LOWERCASEFIRST, GROUPLETTERS",
+  "Full natsort public API (natsorted, realsorted, humansorted, os_sorted, ...)",
+]
+out_of_scope = [
+  "OS locale ordering (ns.LOCALE)",
+  "ns.PATH filesystem heuristics",
+  "ns.PRESORT transform chaining",
+  "Python object-identity semantics (nan, bytes, mixed types)",
+]
