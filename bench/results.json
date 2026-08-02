@@ -1,0 +1,51 @@
+{
+  "benchmark": "natsort-rust vs Python natsort 8.4.0",
+  "workload": {
+    "description": "filename-like strings: file{i}-v{i%37}.{i%5}.log",
+    "n_items": 50000,
+    "warmup_runs_discarded": 2,
+    "timed_runs": 15
+  },
+  "runs": {
+    "windows_reference": {
+      "machine": "Windows 11, Python 3.14 (development/test machine)",
+      "sort_latency_microseconds": {
+        "python": { "mean": 1309306.0, "p50": 1231089.7, "p95": 1854824.3, "p99": 2180606.5 },
+        "rust":   { "mean": 217161.8,  "p50": 204692.0,  "p95": 300032.5,  "p99": 313217.7 },
+        "speedup": { "mean": 6.03, "p50": 6.01, "p95": 6.18, "p99": 6.96 }
+      },
+      "peak_rss_mb": {
+        "python": 42.2,
+        "rust": 24.2,
+        "ratio_python_over_rust": 1.74
+      }
+    },
+    "linux_sandbox_reference": {
+      "machine": "Linux sandbox (CI-equivalent), Python 3.12",
+      "sort_latency_microseconds": {
+        "python": { "mean": 536697.1, "p50": 537116.5, "p95": 546536.1, "p99": 546691.2 },
+        "rust":   { "mean": 81765.5,  "p50": 78851.0,  "p95": 94261.2,  "p99": 117934.6 },
+        "speedup": { "mean": 6.56, "p50": 6.81, "p95": 5.80, "p99": 4.64 }
+      },
+      "peak_rss_mb": {
+        "python": 31.8,
+        "rust": 27.0,
+        "ratio_python_over_rust": 1.18
+      },
+      "process_startup_milliseconds": {
+        "python_interpreter_plus_import": { "mean": 57.64, "p50": 56.49, "max": 65.66 },
+        "rust_binary": { "mean": 2.01, "p50": 1.84, "max": 3.65 },
+        "speedup": 28.6
+      }
+    }
+  },
+  "honesty_notes": [
+    "Numbers genuinely differ by machine (Windows vs Linux sandbox); both are reported rather than picking the more flattering one.",
+    "Sort-throughput speedup is 6-6.5x mean depending on machine, not 10x -- natsort's Python implementation is already reasonably optimized, which caps the achievable ceiling for a drop-in algorithmic port.",
+    "p99 speedup does not consistently exceed or trail mean speedup across machines (6.96x p99 vs 6.03x mean on Windows; 4.64x p99 vs 6.56x mean on Linux) -- tail latency is noisier than the median on both platforms, reported as measured.",
+    "RSS advantage is real but modest (1.18x-1.74x depending on machine), not dramatic, after a decorate-sort-undecorate optimization that traded memory for speed; see DECISIONS.md #18 for the before/after and rationale.",
+    "Windows ctypes-based RSS measurement (added for this benchmark) initially had a silent bug returning 0.0 MB for the Python side due to missing explicit ctypes argtypes/restype on the Win32 calls; fixed and re-verified on real Windows hardware, see DECISIONS.md #25."
+  ],
+  "methodology_file": "bench/methodology.md",
+  "reproduce_command": "python3 bench/run.py 50000 15"
+}
