@@ -61,10 +61,23 @@ Every exclusion above is enforced by name in `pytest.ini` / the root
 **1. The original test suite, unmodified.** natsort's own `test_natsorted.py`,
 `test_natsorted_convenience.py`, and `test_os_sorted.py` — kept verbatim in
 `tests/original/` — total **63 individual test cases**. Run against the Rust
-binary through the adapter: **33 pass**. The other 30 are the out-of-scope
-areas above (locale: needs a real OS locale to even execute; Python object
-semantics: not applicable to a Rust port) — excluded by name, not by editing
-the files. Test files are byte-identical to upstream (SHA-256 verified in
+binary through the adapter: **33 pass**. The other 30, broken down exactly
+(no rounding, no vague "the rest"):
+
+| Category | Count | Why |
+|---|---|---|
+| Locale | 17 | Needs a real OS locale to even execute; natsort's own suite self-skips 3 of these via `skipif` when the locale isn't installed |
+| Nested | 4 | Recursion into nested Python lists — container semantics, not sort logic |
+| PATH | 3 | `ns.PATH` filesystem-path heuristics — a separate feature, not core sorting |
+| NaN | 2 | Python `float('nan')` identity semantics |
+| Mixed types | 1 | Sorting heterogeneous Python objects (int vs str vs None) — not expressible in a statically-typed Rust port |
+| Bytes | 1 | Python `bytes`/`str` mixed-input `TypeError` semantics |
+| **Untested combination** | **2** | `LOWERCASEFIRST\|GROUPLETTERS` combined — genuinely just not covered, no scope excuse for this one |
+
+28 of the 30 are legitimate scope boundaries (Python-language semantics or
+environment-dependent features); 2 are an honest gap. Excluded by name in
+`pytest.ini` / the root `conftest.py`, never by editing the test files.
+Test files are byte-identical to upstream (SHA-256 verified in
 `evidence/original_tests.sha256`).
 
 **2. The adapter is thin — and the one place it wasn't, we found and fixed
