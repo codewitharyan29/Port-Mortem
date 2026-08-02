@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>natsort-rust · run it yourself</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,900&family=JetBrains+Mono:wght@400;500;700&family=Sohne:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #0b0f1a; --ink-2: #121826; --line: #1f2937; --line-soft: #172033;
+    --paper: #f5f2e8; --fg: #e8ecf4; --muted: #7c89a0;
+    --gold: #f5b642; --gold-dim: #b5822a; --green: #5ad19a; --red: #e06868;
+    --mono: 'JetBrains Mono', ui-monospace, monospace;
+    --display: 'Fraunces', Georgia, serif;
+    --body: 'Sohne', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--ink); color: var(--fg); font-family: var(--body); line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    background-image: radial-gradient(ellipse 80% 40% at 50% -10%, rgba(245,182,66,0.06), transparent);
+  }
+  .wrap { max-width: 880px; margin: 0 auto; padding: 0 28px; }
+
+  /* nav */
+  .topnav { display: flex; align-items: center; justify-content: space-between;
+    padding: 22px 28px; border-bottom: 1px solid var(--line); flex-wrap: wrap; gap: 12px;
+    max-width: 880px; margin: 0 auto; }
+  .brand { font-family: var(--display); font-weight: 900; font-size: 18px; color: var(--fg);
+    text-decoration: none; }
+  .brand span { color: var(--gold); font-style: italic; }
+  .navlinks { display: flex; gap: 22px; flex-wrap: wrap; }
+  .navlinks a { font-family: var(--mono); font-size: 12px; letter-spacing: 0.06em;
+    text-transform: uppercase; color: var(--muted); text-decoration: none; padding: 4px 0;
+    border-bottom: 2px solid transparent; transition: color .2s, border-color .2s; }
+  .navlinks a:hover { color: var(--fg); }
+  .navlinks a[data-page="verify"] { color: var(--gold); border-color: var(--gold-dim); }
+  .navlinks a.ext { color: var(--green); }
+
+  header { padding: 56px 0 36px; }
+  .eyebrow { font-family: var(--mono); font-size: 12px; letter-spacing: 0.22em;
+    text-transform: uppercase; color: var(--gold); margin-bottom: 20px;
+    display: flex; align-items: center; gap: 12px; }
+  .eyebrow::before { content: ""; width: 28px; height: 1px; background: var(--gold-dim); }
+  h1 { font-family: var(--display); font-weight: 900; font-size: clamp(34px, 6vw, 56px);
+    line-height: 1.02; letter-spacing: -0.02em; margin-bottom: 16px; }
+  h1 em { color: var(--gold); font-style: italic; }
+  .lede { color: var(--muted); font-size: 17px; max-width: 620px; }
+
+  .os-tabs { display: flex; gap: 8px; margin: 28px 0 8px; }
+  .os-tab { font-family: var(--mono); font-size: 12px; padding: 8px 16px; border-radius: 4px;
+    border: 1px solid var(--line); background: var(--ink-2); color: var(--muted); cursor: pointer;
+    transition: all .15s; }
+  .os-tab.active { color: var(--ink); background: var(--gold); border-color: var(--gold); font-weight: 700; }
+  .os-tab:hover:not(.active) { color: var(--fg); border-color: var(--muted); }
+
+  .step { margin: 36px 0; padding: 24px; border: 1px solid var(--line); border-radius: 6px;
+    background: linear-gradient(180deg, var(--ink-2), transparent); }
+  .step-head { display: flex; align-items: baseline; gap: 14px; margin-bottom: 14px; }
+  .step-num { font-family: var(--display); font-weight: 900; font-size: 28px; color: var(--gold); }
+  .step-title { font-size: 18px; font-weight: 500; }
+  .step-desc { color: var(--muted); font-size: 14px; margin-bottom: 14px; }
+  pre { background: var(--ink); border: 1px solid var(--line-soft); border-radius: 4px;
+    padding: 16px 18px; overflow-x: auto; margin: 10px 0; }
+  code { font-family: var(--mono); font-size: 13.5px; color: var(--fg); }
+  .expect { display: flex; gap: 10px; align-items: flex-start; margin-top: 12px;
+    padding: 10px 14px; background: rgba(90,209,154,0.06); border-left: 2px solid var(--green);
+    border-radius: 0 4px 4px 0; font-size: 13.5px; }
+  .expect b { color: var(--green); font-family: var(--mono); font-size: 11px;
+    text-transform: uppercase; letter-spacing: 0.08em; white-space: nowrap; }
+  .expect code { color: var(--green); }
+  .note { display: flex; gap: 10px; align-items: flex-start; margin-top: 10px;
+    padding: 10px 14px; background: rgba(245,182,66,0.05); border-left: 2px solid var(--gold-dim);
+    border-radius: 0 4px 4px 0; font-size: 13.5px; color: var(--muted); }
+  .note b { color: var(--gold); font-family: var(--mono); font-size: 11px;
+    text-transform: uppercase; letter-spacing: 0.08em; white-space: nowrap; }
+
+  .constraints { margin: 56px 0; }
+  .sec-label { font-family: var(--mono); font-size: 12px; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--muted); margin-bottom: 24px; display: flex; align-items: center; gap: 14px; }
+  .sec-label::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+  .clist { border: 1px solid var(--line); border-radius: 4px; overflow: hidden; }
+  .citem { display: grid; grid-template-columns: 140px 1fr; gap: 20px; padding: 16px 22px;
+    border-bottom: 1px solid var(--line-soft); font-size: 14px; }
+  .citem:last-child { border-bottom: none; }
+  .citem:nth-child(odd) { background: rgba(18,24,38,0.4); }
+  .citem .k { font-family: var(--mono); font-size: 12px; color: var(--gold); text-transform: uppercase; }
+  .citem .v { color: var(--muted); }
+  .citem .v code { color: var(--fg); background: var(--ink-2); padding: 1px 6px; border-radius: 3px; }
+
+  footer { padding: 40px 0 70px; text-align: center; }
+  .motto { font-family: var(--display); font-style: italic; font-size: 16px; color: var(--muted); }
+
+  [data-os] { display: none; }
+  [data-os].shown { display: block; }
+</style>
+</head>
+<body>
+
+  <nav class="topnav">
+    <a href="index.html" class="brand">natsort<span>-rust</span></a>
+    <div class="navlinks">
+      <a href="index.html" data-page="demo">Live demo</a>
+      <a href="dashboard.html" data-page="dashboard">Verification</a>
+      <a href="verify.html" data-page="verify">Run it yourself</a>
+      <a href="cli.html" data-page="cli">CLI reference</a>
+      <a href="https://github.com/codewitharyan29/Port-Mortem" class="ext">GitHub ↗</a>
+    </div>
+  </nav>
+
+<div class="wrap">
+
+  <header>
+    <div class="eyebrow">Reproduce every claim</div>
+    <h1>Don't take our word<br>for it. <em>Run it.</em></h1>
+    <p class="lede">Every number on the verification page comes from these exact commands.
+    Clone the repo, run each step in order, and compare your output to what's shown here.</p>
+
+    <div class="os-tabs">
+      <button class="os-tab active" data-target="win">Windows (PowerShell)</button>
+      <button class="os-tab" data-target="unix">macOS / Linux</button>
+    </div>
+  </header>
+
+  <div class="step">
+    <div class="step-head"><span class="step-num">01</span><span class="step-title">Clone and build</span></div>
+    <p class="step-desc">Requires Rust (stable) and Python 3.9+. No other setup.</p>
+    <div data-os="win" class="shown">
+<pre><code>git clone https://github.com/codewitharyan29/Port-Mortem.git
+cd Port-Mortem
+cargo build --release</code></pre>
+    </div>
+    <div data-os="unix">
+<pre><code>git clone https://github.com/codewitharyan29/Port-Mortem.git
+cd Port-Mortem
+cargo build --release</code></pre>
+    </div>
+    <div class="expect"><b>Expect</b><span><code>Finished `release` profile [optimized] target(s)</code> — zero warnings.</span></div>
+  </div>
+
+  <div class="step">
+    <div class="step-head"><span class="step-num">02</span><span class="step-title">Sanity check the binary</span></div>
+    <p class="step-desc">Confirm it's really Rust doing the sorting, not a shim.</p>
+    <div data-os="win" class="shown">
+<pre><code>"file10`nfile2`nfile1" | .\target\release\natsort_port.exe sort
+.\target\release\natsort_port.exe key "a-5.034e2"</code></pre>
+    </div>
+    <div data-os="unix">
+<pre><code>printf 'file10\nfile2\nfile1\n' | ./target/release/natsort_port sort
+./target/release/natsort_port key "a-5.034e2"</code></pre>
+    </div>
+    <div class="expect"><b>Expect</b><span><code>file1 file2 file10</code> then <code>T:a- I:5 T:. I:34 T:e I:2</code></span></div>
+  </div>
+
+  <div class="step">
+    <div class="step-head"><span class="step-num">03</span><span class="step-title">Native Rust tests</span></div>
+    <p class="step-desc">Unit tests, property tests (proptest), and CLI contract tests.</p>
+    <pre><code>cargo test --release</code></pre>
+    <div class="expect"><b>Expect</b><span><code>test result: ok. 44 passed; 0 failed</code></span></div>
+  </div>
+
+  <div class="step">
+    <div class="step-head"><span class="step-num">04</span><span class="step-title">natsort's own tests, unmodified</span></div>
+    <p class="step-desc">The headline proof: natsort's original test files, byte-identical to
+    upstream (sha256-verified), run against the Rust binary via a thin adapter.</p>
+    <div data-os="win" class="shown">
+<pre><code>py -m pip install pytest hypothesis
+$env:PYTHONPATH="adapter"
+py -m pytest -q</code></pre>
+    </div>
+    <div data-os="unix">
+<pre><code>pip install pytest hypothesis
+PYTHONPATH=adapter python3 -m pytest -q</code></pre>
+    </div>
+    <div class="expect"><b>Expect</b><span><code>28 passed, 35 deselected</code></span></div>
+    <div class="note"><b>Why deselected</b><span>Each of the 35 tests genuinely out-of-scope tests
+    (OS locale, PRESORT chaining, Python nan/bytes semantics) is excluded by name with a documented
+    reason in <code>pytest.ini</code> and the root <code>conftest.py</code> — never edited silently.
+    Verify the test files themselves are untouched: <code>sha256sum -c evidence/original_tests.sha256</code>
+    from inside <code>tests/original/</code>.</span></div>
+  </div>
+
+  <div class="step">
+    <div class="step-head"><span class="step-num">05</span><span class="step-title">Differential fuzz</span></div>
+    <p class="step-desc">Random inputs across the full Unicode character set, compared against the
+    live Python library.</p>
+    <pre><code>python3 fuzz/harness.py 3000</code></pre>
+    <div class="expect"><b>Expect</b><span><code>TOTAL DIVERGENCES: 0</code> (21,000 comparisons, 7 algorithms)</span></div>
+    <p class="step-desc" style="margin-top:18px">For the continuous 60-second Fuzz Survivor run
+    (published log at <code>evidence/fuzz_60s_log.txt</code>):</p>
+    <pre><code>python3 fuzz/harness_60s.py 60</code></pre>
+    <div class="expect"><b>Expect</b><span><code>RESULT: 60.0s continuous run ... TOTAL DIVERGENCES: 0</code></span></div>
+  </div>
+
+  <div class="step">
+    <div class="step-head"><span class="step-num">06</span><span class="step-title">CLI differential + mutation testing</span></div>
+    <p class="step-desc">Every CLI invocation compared to Python's CLI; deliberate bugs injected
+    to confirm the test suite actually catches regressions.</p>
+    <pre><code>python3 cli_difftest.py 200
+python3 mutation_test.py</code></pre>
+    <div class="expect"><b>Expect</b><span><code>2,800 invocations, 0 divergences</code> and <code>MUTATION SCORE: 5/5</code></span></div>
+  </div>
+
+  <div class="step">
+    <div class="step-head"><span class="step-num">07</span><span class="step-title">Lint and coverage</span></div>
+    <p class="step-desc">Requires <code>rustup</code> (for clippy) and <code>cargo-llvm-cov</code>.</p>
+    <pre><code>cargo clippy --release --all-targets -- -D warnings
+cargo install cargo-llvm-cov
+cargo llvm-cov --release --summary-only</code></pre>
+    <div class="expect"><b>Expect</b><span>Zero clippy warnings; ~91% region/line coverage on <code>src/lib.rs</code></span></div>
+  </div>
+
+  <div class="step">
+    <div class="step-head"><span class="step-num">08</span><span class="step-title">Benchmark</span></div>
+    <p class="step-desc">Honest numbers: mean, p50, p95, p99 latency and peak RSS — not just
+    hot-loop throughput.</p>
+    <pre><code>python3 bench/run.py 50000 15</code></pre>
+    <div class="expect"><b>Expect</b><span>~6.8x mean speedup, ~7.3x p99 speedup (exact numbers vary by machine — see <code>evidence/bench_results.txt</code> for the reference run)</span></div>
+  </div>
+
+  <div class="step">
+    <div class="step-head"><span class="step-num">09</span><span class="step-title">Build and run the live WASM demo</span></div>
+    <p class="step-desc">Compiles the same Rust core to WebAssembly so it sorts live in the
+    browser, then serves it over local HTTP.</p>
+
+    <p style="color:var(--muted);font-size:13px;margin:4px 0 10px">One-time setup:</p>
+    <pre><code>rustup target add wasm32-unknown-unknown
+cargo install wasm-pack</code></pre>
+
+    <div class="note"><b>Windows note</b><span><code>./build-wasm.sh</code> invokes <code>bash</code>,
+    which on Windows tries to route through WSL — if no WSL distro is installed you'll see
+    <code>"Windows Subsystem for Linux has no installed distributions."</code> and the build
+    silently won't run. Skip the script and run the underlying command directly instead
+    (works identically on every platform):</span></div>
+
+    <pre><code>wasm-pack build --target web --out-dir web/pkg --out-name natsort_core -- --features wasm</code></pre>
+    <div class="expect"><b>Expect</b><span>Takes 1–4 minutes. Ends with:
+    <code>[INFO]: :-) Your wasm pkg is ready to publish at .../web/pkg</code></span></div>
+
+    <p style="color:var(--muted);font-size:13px;margin:14px 0 6px">Then serve — WASM does not
+    load over a bare <code>file://</code> URL, it needs an actual HTTP server:</p>
+    <pre><code>cd web
+python3 -m http.server 8000</code></pre>
+    <div class="expect"><b>Expect</b><span>Open <code>http://localhost:8000</code> in a browser
+    (not double-clicking <code>index.html</code>) — the amber "module not found" warning
+    disappears and Sort/Shuffle become live.</span></div>
+    <div class="note"><b>If it still shows the warning</b><span>Hard-refresh the page
+    (<code>Ctrl+Shift+R</code>) — browsers sometimes cache the earlier 404 response for
+    <code>pkg/natsort_core.js</code> from before the build finished.</span></div>
+  </div>
+
+  <div class="constraints">
+    <div class="sec-label">Environment constraints</div>
+    <div class="clist">
+      <div class="citem"><div class="k">Rust</div><div class="v">Stable toolchain, edition 2021. Tested on 1.75–1.97.</div></div>
+      <div class="citem"><div class="k">Python</div><div class="v">3.9+. Needs <code>pytest</code> and <code>hypothesis</code> (natsort's own conftest imports hypothesis).</div></div>
+      <div class="citem"><div class="k">Windows</div><div class="v">Binary is <code>natsort_port.exe</code>; all Python helpers detect this automatically. Use <code>py</code>, not <code>python3</code>.</div></div>
+      <div class="citem"><div class="k">Coverage tool</div><div class="v">Optional — <code>cargo-llvm-cov</code> needs the <code>llvm-tools-preview</code> rustup component (installed on first run, ~40MB).</div></div>
+      <div class="citem"><div class="k">WASM demo</div><div class="v">Optional — needs <code>wasm-pack</code> + <code>wasm32-unknown-unknown</code> target. See Step 09 above (on Windows, skip <code>build-wasm.sh</code> — it needs WSL; run the <code>wasm-pack build</code> command directly instead).</div></div>
+      <div class="citem"><div class="k">Network</div><div class="v">Only needed once, to fetch crates.io / PyPI packages. All differential tests run fully offline against the vendored natsort source in <code>vendor/</code>.</div></div>
+    </div>
+  </div>
+
+  <footer>
+    <p class="motto">Languages die. Code doesn't.</p>
+  </footer>
+
+</div>
+
+<script>
+  document.querySelectorAll('.os-tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.os-tab').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const target = btn.dataset.target;
+      document.querySelectorAll('[data-os]').forEach(el => {
+        el.classList.toggle('shown', el.dataset.os === target);
+      });
+    });
+  });
+</script>
+</body>
+</html>

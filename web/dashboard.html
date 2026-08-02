@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>natsort-rust · verification</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,900&family=JetBrains+Mono:wght@400;500;700&family=Sohne:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #0b0f1a;
+    --ink-2: #121826;
+    --line: #1f2937;
+    --line-soft: #172033;
+    --paper: #f5f2e8;
+    --fg: #e8ecf4;
+    --muted: #7c89a0;
+    --gold: #f5b642;
+    --gold-dim: #b5822a;
+    --green: #5ad19a;
+    --mono: 'JetBrains Mono', ui-monospace, monospace;
+    --display: 'Fraunces', Georgia, serif;
+    --body: 'Sohne', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--ink);
+    color: var(--fg);
+    font-family: var(--body);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    background-image:
+      radial-gradient(ellipse 80% 50% at 50% -20%, rgba(245,182,66,0.06), transparent),
+      linear-gradient(var(--line-soft) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line-soft) 1px, transparent 1px);
+    background-size: 100% 100%, 44px 44px, 44px 44px;
+    background-position: 0 0, 0 0, 0 0;
+  }
+  .wrap { max-width: 1000px; margin: 0 auto; padding: 0 28px; }
+
+  .topnav { display: flex; align-items: center; justify-content: space-between;
+    padding: 22px 28px; border-bottom: 1px solid var(--line); flex-wrap: wrap; gap: 12px;
+    max-width: 1000px; margin: 0 auto; }
+  .brand { font-family: var(--display); font-weight: 900; font-size: 18px; color: var(--fg);
+    text-decoration: none; }
+  .brand span { color: var(--gold); font-style: italic; }
+  .navlinks { display: flex; gap: 22px; flex-wrap: wrap; }
+  .navlinks a { font-family: var(--mono); font-size: 12px; letter-spacing: 0.06em;
+    text-transform: uppercase; color: var(--muted); text-decoration: none; padding: 4px 0;
+    border-bottom: 2px solid transparent; transition: color .2s; }
+  .navlinks a:hover { color: var(--fg); }
+  .navlinks a.ext { color: var(--green); }
+
+
+  /* ---- header ---- */
+  header { padding: 90px 0 60px; border-bottom: 1px solid var(--line); }
+  .eyebrow {
+    font-family: var(--mono); font-size: 12px; letter-spacing: 0.22em;
+    text-transform: uppercase; color: var(--gold); margin-bottom: 26px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .eyebrow::before { content: ""; width: 28px; height: 1px; background: var(--gold-dim); }
+  h1 {
+    font-family: var(--display); font-weight: 900; font-size: clamp(44px, 8vw, 88px);
+    line-height: 0.98; letter-spacing: -0.02em; margin-bottom: 24px;
+  }
+  h1 .n { color: var(--gold); font-style: italic; }
+  .lede {
+    font-size: 19px; color: var(--muted); max-width: 640px;
+  }
+  .lede b { color: var(--fg); font-weight: 500; }
+
+  /* ---- headline stat ---- */
+  .headline {
+    margin: 56px 0 0; padding: 40px; border: 1px solid var(--line);
+    background: linear-gradient(180deg, var(--ink-2), transparent);
+    border-radius: 4px; display: flex; align-items: baseline; gap: 28px; flex-wrap: wrap;
+  }
+  .headline .big {
+    font-family: var(--display); font-weight: 900; font-size: clamp(56px, 11vw, 120px);
+    line-height: 0.85; color: var(--paper); letter-spacing: -0.03em;
+  }
+  .headline .ctx { flex: 1; min-width: 240px; }
+  .headline .ctx h3 { font-family: var(--mono); font-size: 13px; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--gold); margin-bottom: 8px; font-weight: 500; }
+  .headline .ctx p { color: var(--muted); font-size: 15px; }
+
+  /* ---- section ---- */
+  section { padding: 64px 0; border-bottom: 1px solid var(--line); }
+  .sec-label {
+    font-family: var(--mono); font-size: 12px; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--muted); margin-bottom: 32px; display: flex; align-items: center; gap: 14px;
+  }
+  .sec-label .idx { color: var(--gold); }
+  .sec-label::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+
+  /* ---- metrics grid ---- */
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1px;
+    background: var(--line); border: 1px solid var(--line); border-radius: 4px; overflow: hidden; }
+  .cell { background: var(--ink); padding: 26px 22px; transition: background 0.25s; }
+  .cell:hover { background: var(--ink-2); }
+  .cell .v { font-family: var(--display); font-weight: 600; font-size: 42px; line-height: 1;
+    color: var(--fg); letter-spacing: -0.02em; }
+  .cell .v.gold { color: var(--gold); }
+  .cell .v.green { color: var(--green); }
+  .cell .k { font-size: 13px; color: var(--muted); margin-top: 10px; }
+  .cell .sub { font-family: var(--mono); font-size: 11px; color: var(--line);
+    color: #4a5568; margin-top: 4px; }
+
+  /* ---- layers table ---- */
+  .layers { border: 1px solid var(--line); border-radius: 4px; overflow: hidden; }
+  .layer { display: grid; grid-template-columns: auto 1fr auto; gap: 20px; align-items: center;
+    padding: 20px 24px; border-bottom: 1px solid var(--line-soft); }
+  .layer:last-child { border-bottom: none; }
+  .layer:nth-child(odd) { background: rgba(18,24,38,0.4); }
+  .layer .num { font-family: var(--mono); font-size: 12px; color: var(--gold); width: 28px; }
+  .layer .name { font-weight: 500; }
+  .layer .name span { display: block; font-size: 13px; color: var(--muted); font-weight: 400; margin-top: 2px; }
+  .layer .stat { font-family: var(--mono); font-size: 13px; color: var(--green);
+    white-space: nowrap; }
+  .layer .stat.zero { color: var(--gold); }
+
+  /* ---- bug callout ---- */
+  .bug { border-left: 2px solid var(--gold); padding: 8px 0 8px 28px; margin-top: 8px; }
+  .bug code { font-family: var(--mono); font-size: 13px; background: var(--ink-2);
+    padding: 2px 7px; border-radius: 3px; color: var(--gold); }
+  .bug p { color: var(--muted); max-width: 680px; }
+  .bug p + p { margin-top: 14px; }
+
+  footer { padding: 50px 0 80px; }
+  .motto { font-family: var(--display); font-style: italic; font-size: 24px; color: var(--muted); }
+  .motto b { color: var(--gold); font-style: normal; font-weight: 600; }
+  a { color: var(--gold); text-decoration: none; border-bottom: 1px solid var(--gold-dim); }
+  a:hover { color: var(--fg); }
+
+  @media (max-width: 560px) {
+    .layer { grid-template-columns: auto 1fr; }
+    .layer .stat { grid-column: 2; }
+    .headline { padding: 28px; }
+  }
+</style>
+</head>
+<body>
+  <nav class="topnav">
+    <a href="index.html" class="brand">natsort<span>-rust</span></a>
+    <div class="navlinks">
+      <a href="index.html" data-page="demo">Live demo</a>
+      <a href="dashboard.html" data-page="dashboard" style="color:var(--gold);border-color:var(--gold-dim)">Verification</a>
+      <a href="verify.html" data-page="verify">Run it yourself</a>
+      <a href="cli.html" data-page="cli">CLI reference</a>
+      <a href="https://github.com/codewitharyan29/Port-Mortem" class="ext">GitHub &#8599;</a>
+    </div>
+  </nav>
+
+<div class="wrap">
+
+  <header>
+    <div class="eyebrow">Python → Rust · behavioral parity</div>
+    <h1>natsort, ported<br>to Rust — proven<br>to <span class="n">order</span> alike.</h1>
+    <p class="lede">A Rust reimplementation of Python's <b>natsort</b> library. Not just rewritten — every algorithm is checked against the original until they sort <b>byte-for-byte identically</b>.</p>
+
+    <div class="headline">
+      <div class="big">0</div>
+      <div class="ctx">
+        <h3>Divergences</h3>
+        <p>Across 21,000 comparisons spanning the full Unicode character set and all seven algorithms, the port and the original library never disagree on order.</p>
+      </div>
+    </div>
+  </header>
+
+  <section>
+    <div class="sec-label"><span class="idx">01</span> By the numbers</div>
+    <div class="grid">
+      <div class="cell"><div class="v gold">100%</div><div class="k">Unicode parity</div><div class="sub">all 7 algorithms</div></div>
+      <div class="cell"><div class="v green">28</div><div class="k">Original tests</div><div class="sub">unmodified · sha-256</div></div>
+      <div class="cell"><div class="v green">44</div><div class="k">Native tests</div><div class="sub">unit + property</div></div>
+      <div class="cell"><div class="v gold">5/5</div><div class="k">Mutations killed</div><div class="sub">100% catch rate</div></div>
+      <div class="cell"><div class="v green">91%</div><div class="k">Core coverage</div><div class="sub">src/lib.rs</div></div>
+      <div class="cell"><div class="v gold">0</div><div class="k">Unsafe blocks</div><div class="sub">compiler-forbidden</div></div>
+      <div class="cell"><div class="v green">0</div><div class="k">Clippy warnings</div><div class="sub">-D warnings in CI</div></div>
+      <div class="cell"><div class="v gold">2,209</div><div class="k">Unicode chars</div><div class="sub">digit tables embedded</div></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-label"><span class="idx">02</span> How parity is proven</div>
+    <div class="layers">
+      <div class="layer"><div class="num">/01</div><div class="name">Original test suite<span>natsort's own tests, byte-identical, run against the Rust binary</span></div><div class="stat">28 pass</div></div>
+      <div class="layer"><div class="num">/02</div><div class="name">Differential fuzz<span>random inputs × 7 algorithms vs the live Python library</span></div><div class="stat zero">0 divergences</div></div>
+      <div class="layer"><div class="num">/03</div><div class="name">Full-Unicode sweep<span>21,000 comparisons across digits, romans, fractions, ligatures</span></div><div class="stat zero">0 divergences</div></div>
+      <div class="layer"><div class="num">/04</div><div class="name">CLI differential<span>2,800 sort + compare invocations, stdout compared</span></div><div class="stat zero">0 divergences</div></div>
+      <div class="layer"><div class="num">/05</div><div class="name">Mutation testing<span>deliberate bugs injected to check the tests have teeth</span></div><div class="stat">5/5 killed</div></div>
+      <div class="layer"><div class="num">/06</div><div class="name">Memory safety<span>unsafe forbidden at the crate level by the compiler</span></div><div class="stat">0 unsafe</div></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-label"><span class="idx">03</span> A bug in the original</div>
+    <div class="bug">
+      <p>Differential testing surfaced a genuine issue in natsort itself. Under <code>ns.REAL</code>, numeric values above the float maximum (~1.8 × 10³⁰⁸) overflow to <code>inf</code> — so two distinct large numbers compare equal and their order is silently lost.</p>
+      <p>The Rust port reproduces this exactly, so parity holds. Filed upstream: <a href="https://github.com/SethMMorton/natsort/issues/192" style="color:var(--green);border-color:var(--green)">natsort#192 &#8599;</a>.</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-label"><span class="idx">04</span> Unicode, in full</div>
+    <div class="bug" style="border-color: var(--green)">
+      <p>Three character classes are handled exactly as natsort does them: <b>decimal digits</b> (fullwidth ０-９, Arabic-Indic ٠-٩, Thai, Devanagari) concatenate into numbers; <b>isolated digits</b> (circled ①, superscript ²) each become a separate single-digit number; <b>numeric non-digits</b> (Roman Ⅷ, fraction ½) are numbers under REAL only.</p>
+      <p>Input is NFD-normalized and case-insensitive modes use casefolding (ß → ss, ﬁ → fi), so accented and cased text orders identically to Python.</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-label"><span class="idx">05</span> Performance, honestly</div>
+    <div class="grid" style="grid-template-columns: repeat(4, 1fr)">
+      <div class="cell"><div class="v gold">4.7x</div><div class="k">Mean speedup</div><div class="sub">50k-item workload</div></div>
+      <div class="cell"><div class="v gold">4.7x</div><div class="k">p99 speedup</div><div class="sub">not just hot-loop</div></div>
+      <div class="cell"><div class="v green">4.1x</div><div class="k">Less peak RSS</div><div class="sub">7.7MB vs 31.8MB</div></div>
+      <div class="cell"><div class="v">0</div><div class="k">Python runtime needed</div><div class="sub">single binary</div></div>
+    </div>
+    <div class="bug" style="margin-top:24px">
+      <p>4.7x, not 10x — reported as measured. natsort's Python implementation is
+      already reasonably optimized, which caps the ceiling for an algorithmic
+      port. The clearer win is memory: <b style="color:var(--green)">4.1x less peak RSS</b>, and no Python runtime is
+      required at all.</p>
+    </div>
+  </section>
+
+  <footer>
+    <p class="motto">Languages die. <b>Code doesn't.</b></p>
+  </footer>
+
+</div>
+</body>
+</html>

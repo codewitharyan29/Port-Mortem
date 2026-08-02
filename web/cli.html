@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>natsort-rust · CLI reference</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,900&family=JetBrains+Mono:wght@400;500;700&family=Sohne:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #0b0f1a; --ink-2: #121826; --line: #1f2937; --line-soft: #172033;
+    --paper: #f5f2e8; --fg: #e8ecf4; --muted: #7c89a0;
+    --gold: #f5b642; --gold-dim: #b5822a; --green: #5ad19a; --blue: #7aa2f7;
+    --mono: 'JetBrains Mono', ui-monospace, monospace;
+    --display: 'Fraunces', Georgia, serif;
+    --body: 'Sohne', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--ink); color: var(--fg); font-family: var(--body); line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    background-image: radial-gradient(ellipse 80% 40% at 50% -10%, rgba(245,182,66,0.06), transparent);
+  }
+  .wrap { max-width: 880px; margin: 0 auto; padding: 0 28px; }
+
+  .topnav { display: flex; align-items: center; justify-content: space-between;
+    padding: 22px 28px; border-bottom: 1px solid var(--line); flex-wrap: wrap; gap: 12px;
+    max-width: 880px; margin: 0 auto; }
+  .brand { font-family: var(--display); font-weight: 900; font-size: 18px; color: var(--fg);
+    text-decoration: none; }
+  .brand span { color: var(--gold); font-style: italic; }
+  .navlinks { display: flex; gap: 22px; flex-wrap: wrap; }
+  .navlinks a { font-family: var(--mono); font-size: 12px; letter-spacing: 0.06em;
+    text-transform: uppercase; color: var(--muted); text-decoration: none; padding: 4px 0;
+    border-bottom: 2px solid transparent; }
+  .navlinks a:hover { color: var(--fg); }
+  .navlinks a[data-page="cli"] { color: var(--gold); border-color: var(--gold-dim); }
+  .navlinks a.ext { color: var(--green); }
+
+  header { padding: 56px 0 40px; }
+  .eyebrow { font-family: var(--mono); font-size: 12px; letter-spacing: 0.22em;
+    text-transform: uppercase; color: var(--gold); margin-bottom: 20px;
+    display: flex; align-items: center; gap: 12px; }
+  .eyebrow::before { content: ""; width: 28px; height: 1px; background: var(--gold-dim); }
+  h1 { font-family: var(--display); font-weight: 900; font-size: clamp(34px, 6vw, 56px);
+    line-height: 1.02; letter-spacing: -0.02em; margin-bottom: 16px; }
+  h1 em { color: var(--gold); font-style: italic; }
+  .lede { color: var(--muted); font-size: 17px; max-width: 620px; }
+
+  section { padding: 44px 0; border-bottom: 1px solid var(--line); }
+  .sec-label { font-family: var(--mono); font-size: 12px; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--muted); margin-bottom: 26px; display: flex; align-items: center; gap: 14px; }
+  .sec-label::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+
+  .cmd-card { border: 1px solid var(--line); border-radius: 6px; margin-bottom: 22px; overflow: hidden;
+    background: linear-gradient(180deg, var(--ink-2), transparent); }
+  .cmd-head { padding: 18px 22px; border-bottom: 1px solid var(--line); display: flex;
+    align-items: baseline; gap: 14px; flex-wrap: wrap; }
+  .cmd-sig { font-family: var(--mono); font-size: 15px; color: var(--gold); font-weight: 700; }
+  .cmd-sig .arg { color: var(--blue); font-weight: 400; }
+  .cmd-what { color: var(--muted); font-size: 13.5px; }
+  .cmd-body { padding: 18px 22px; }
+  pre { background: var(--ink); border: 1px solid var(--line-soft); border-radius: 4px;
+    padding: 14px 16px; overflow-x: auto; margin: 6px 0; }
+  code { font-family: var(--mono); font-size: 13px; }
+  .io-row { display: grid; grid-template-columns: 60px 1fr; gap: 12px; align-items: start;
+    font-size: 13px; margin: 8px 0; }
+  .io-tag { font-family: var(--mono); font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase;
+    padding: 3px 8px; border-radius: 3px; text-align: center; height: fit-content; }
+  .io-tag.in { background: rgba(122,162,247,0.12); color: var(--blue); }
+  .io-tag.out { background: rgba(90,209,154,0.12); color: var(--green); }
+  .io-tag.exit { background: rgba(245,182,66,0.12); color: var(--gold); }
+
+  .flags { border: 1px solid var(--line); border-radius: 4px; overflow: hidden; margin-top: 10px; }
+  .flag-row { display: grid; grid-template-columns: 180px 1fr; gap: 16px; padding: 10px 18px;
+    border-bottom: 1px solid var(--line-soft); font-size: 13px; }
+  .flag-row:last-child { border-bottom: none; }
+  .flag-row:nth-child(odd) { background: rgba(18,24,38,0.35); }
+  .flag-row code { color: var(--gold); }
+  .flag-row span { color: var(--muted); }
+
+  .arch { border: 1px solid var(--line); border-radius: 6px; padding: 26px; margin-top: 8px;
+    font-family: var(--mono); font-size: 13px; line-height: 2.1; color: var(--muted); }
+  .arch b { color: var(--fg); }
+  .arch .g { color: var(--gold); }
+  .arch .gr { color: var(--green); }
+
+  footer { padding: 44px 0 70px; text-align: center; }
+  .motto { font-family: var(--display); font-style: italic; font-size: 16px; color: var(--muted); }
+
+  @media (max-width: 560px) { .io-row, .flag-row { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+  <nav class="topnav">
+    <a href="index.html" class="brand">natsort<span>-rust</span></a>
+    <div class="navlinks">
+      <a href="index.html" data-page="demo">Live demo</a>
+      <a href="dashboard.html" data-page="dashboard">Verification</a>
+      <a href="verify.html" data-page="verify">Run it yourself</a>
+      <a href="cli.html" data-page="cli">CLI reference</a>
+      <a href="https://github.com/codewitharyan29/Port-Mortem" class="ext">GitHub ↗</a>
+    </div>
+  </nav>
+
+<div class="wrap">
+
+  <header>
+    <div class="eyebrow">natsort_port · binary</div>
+    <h1>One binary,<br>six ways to <em>ask it</em><br>to sort.</h1>
+    <p class="lede">The compiled Rust binary is both the product and the test subject — every
+    differential harness in this project drives it through these same six subcommands.</p>
+  </header>
+
+  <section>
+    <div class="sec-label">Human-facing commands</div>
+
+    <div class="cmd-card">
+      <div class="cmd-head">
+        <span class="cmd-sig">sort <span class="arg">[flags]</span></span>
+        <span class="cmd-what">Read lines from stdin, print them naturally sorted</span>
+      </div>
+      <div class="cmd-body">
+        <pre><code>printf 'file10\nfile2\nfile1\n' | natsort_port sort</code></pre>
+        <div class="io-row"><span class="io-tag in">stdin</span><span>One item per line</span></div>
+        <div class="io-row"><span class="io-tag out">stdout</span><span><code>file1</code>, <code>file2</code>, <code>file10</code> — one per line</span></div>
+      </div>
+    </div>
+
+    <div class="cmd-card">
+      <div class="cmd-head">
+        <span class="cmd-sig">compare <span class="arg">A B</span> <span class="arg">[flags]</span></span>
+        <span class="cmd-what">Print -1 / 0 / 1, like a comparator function</span>
+      </div>
+      <div class="cmd-body">
+        <pre><code>natsort_port compare num2 num10</code></pre>
+        <div class="io-row"><span class="io-tag out">stdout</span><span><code>-1</code> (num2 sorts before num10)</span></div>
+      </div>
+    </div>
+
+    <div class="cmd-card">
+      <div class="cmd-head">
+        <span class="cmd-sig">key <span class="arg">STRING</span> <span class="arg">[flags]</span></span>
+        <span class="cmd-what">Print the parsed natsort key — how a string splits into chunks</span>
+      </div>
+      <div class="cmd-body">
+        <pre><code>natsort_port key "a-5.034e2"</code></pre>
+        <div class="io-row"><span class="io-tag out">stdout</span><span><code>T:a-&#9;I:5&#9;T:.&#9;I:34&#9;T:e&#9;I:2</code></span></div>
+        <p style="color:var(--muted);font-size:13px;margin-top:10px">Each token is <code>T:</code>ext,
+        <code>I:</code>nteger, or <code>R:</code>eal (float) — tab-separated so a caller can rebuild
+        the tuple exactly (this is how the differential harnesses compare keys byte-for-byte against
+        Python's <code>natsort_keygen()</code>).</p>
+      </div>
+    </div>
+
+    <div class="cmd-card">
+      <div class="cmd-head">
+        <span class="cmd-sig">os-sort</span>
+        <span class="cmd-what">Sort stdin the way a file manager would (case-insensitive natural order)</span>
+      </div>
+      <div class="cmd-body">
+        <pre><code>printf 'Banana\napple\nCherry\n' | natsort_port os-sort</code></pre>
+        <div class="io-row"><span class="io-tag out">stdout</span><span><code>apple</code>, <code>Banana</code>, <code>Cherry</code></span></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-label">Machine-facing commands</div>
+    <p style="color:var(--muted);font-size:14px;margin-bottom:20px">Used internally by the Python
+    test harnesses — batch mode avoids spawning one process per comparison.</p>
+
+    <div class="cmd-card">
+      <div class="cmd-head">
+        <span class="cmd-sig">batch-sort</span>
+        <span class="cmd-what">Sort many lists in one process invocation</span>
+      </div>
+      <div class="cmd-body">
+        <pre><code>printf 'real\t1.10\t1.2\n' | natsort_port batch-sort</code></pre>
+        <div class="io-row"><span class="io-tag in">stdin</span><span>One line per list: <code>flagspec&#9;item1&#9;item2&#9;...</code></span></div>
+        <div class="io-row"><span class="io-tag out">stdout</span><span>One sorted, tab-joined line per input line</span></div>
+        <p style="color:var(--muted);font-size:13px;margin-top:10px">This is what <code>fuzz_harness.py</code>,
+        <code>fuzz_60s.py</code>, and the adapter's <code>natsorted()</code> shim call — thousands of
+        comparisons without the ~1ms process-spawn cost each.</p>
+      </div>
+    </div>
+
+    <div class="cmd-card">
+      <div class="cmd-head">
+        <span class="cmd-sig">bench <span class="arg">N</span></span>
+        <span class="cmd-what">Sort N generated filenames in-process, print elapsed microseconds</span>
+      </div>
+      <div class="cmd-body">
+        <pre><code>natsort_port bench 50000</code></pre>
+        <div class="io-row"><span class="io-tag out">stdout</span><span>A single number: microseconds elapsed for the sort itself (excludes process startup)</span></div>
+        <p style="color:var(--muted);font-size:13px;margin-top:10px">Called by <code>bench.py</code>,
+        which wraps it with <code>/usr/bin/time -v</code> for peak RSS and computes p50/p95/p99 across
+        multiple runs.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-label">Algorithm flags</div>
+    <p style="color:var(--muted);font-size:14px;margin-bottom:14px">Appended to <code>sort</code>,
+    <code>compare</code>, or <code>key</code>. Omit for the default (INT).</p>
+    <div class="flags">
+      <div class="flag-row"><code>--real</code><span>Signed floats: "1.10" parses as 1.1, not text-then-10</span></div>
+      <div class="flag-row"><code>--signed</code><span>A leading +/- attaches to the following number</span></div>
+      <div class="flag-row"><code>--float</code><span>Unsigned floats</span></div>
+      <div class="flag-row"><code>--ignorecase</code><span>Fold case before comparing (uses casefold, not lowercase)</span></div>
+      <div class="flag-row"><code>--lowercasefirst</code><span>Swap the case of every letter before comparing</span></div>
+      <div class="flag-row"><code>--groupletters</code><span>Expand each letter to casefold(c) + c</span></div>
+    </div>
+    <p style="color:var(--muted);font-size:13px;margin-top:14px"><code>batch-sort</code> takes the same
+    flags as comma-separated words in the line's first field instead: <code>real,ignorecase</code>.</p>
+  </section>
+
+  <section style="border-bottom:none">
+    <div class="sec-label">How it's wired together</div>
+    <div class="arch">
+&gt; <b>Python calls this binary</b>, never the reverse<br>
+&gt; <span class="g">adapter/natsort/__init__.py</span> — Python package, same names as real natsort<br>
+&gt;&nbsp;&nbsp;every function shells out to <span class="gr">natsort_port</span> via subprocess<br>
+&gt;&nbsp;&nbsp;lets natsort's <b>own, unmodified test files</b> import "natsort" and hit Rust<br>
+&gt;<br>
+&gt; <span class="g">fuzz_harness.py / fuzz_60s.py</span> — random strings → both sides → diff<br>
+&gt; <span class="g">cli_difftest.py</span> — same idea, but through the CLI surface directly<br>
+&gt; <span class="g">bench.py</span> — timing + memory, Python vs Rust, same workload<br>
+    </div>
+  </section>
+
+  <footer>
+    <p class="motto">Languages die. Code doesn't.</p>
+  </footer>
+
+</div>
+</body>
+</html>
