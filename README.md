@@ -44,12 +44,13 @@ rather than silently ignoring gaps.
 | Area | Status |
 |---|---|
 | INT, REAL, FLOAT, SIGNED (number parsing) | ✅ Supported, verified equivalent |
+| `ns.NOEXP` (suppress exponent parsing under REAL/FLOAT) | ✅ Supported, verified equivalent |
 | IGNORECASE, LOWERCASEFIRST, GROUPLETTERS (text transforms) | ✅ Supported, verified equivalent |
 | Full Unicode (decimal digits, isolated digits, Roman/fraction numerics, NFD, casefold) | ✅ Supported, verified equivalent |
 | Full public API (`natsorted`, `realsorted`, `humansorted`, `os_sorted`, `index_*`, `natsort_key`, `chain_functions`, decoders, …) | ✅ Supported, verified equivalent |
 | `ns.LOCALE` (OS-locale-dependent ordering) | ❌ Out of scope — environment-specific, not portable behavior to verify |
 | `ns.PATH` (filesystem-path heuristics) | ❌ Out of scope — a separate feature, not core sorting |
-| `ns.PRESORT` (transform chaining) | ❌ Out of scope — not implemented |
+| `ns.PRESORT` (presort ties lexicographically before natural sort) | ✅ Supported, verified equivalent |
 | Python object semantics (`nan` identity, `bytes`/`str` mixed-type errors, heterogeneous-type sort) | ❌ Out of scope — these are Python-language semantics, not natsort's sort algorithm |
 
 Every exclusion above is enforced by name in `pytest.ini` / the root
@@ -60,11 +61,11 @@ Every exclusion above is enforced by name in `pytest.ini` / the root
 **1. The original test suite, unmodified.** natsort's own `test_natsorted.py`,
 `test_natsorted_convenience.py`, and `test_os_sorted.py` — kept verbatim in
 `tests/original/` — total **63 individual test cases**. Run against the Rust
-binary through the adapter: **28 pass**. The other 35 are the out-of-scope
-areas above (locale: needs a real OS locale to even execute; PRESORT: not
-implemented; Python object semantics: not applicable to a Rust port) —
-excluded by name, not by editing the files. Test files are byte-identical to
-upstream (SHA-256 verified in `evidence/original_tests.sha256`).
+binary through the adapter: **33 pass**. The other 30 are the out-of-scope
+areas above (locale: needs a real OS locale to even execute; Python object
+semantics: not applicable to a Rust port) — excluded by name, not by editing
+the files. Test files are byte-identical to upstream (SHA-256 verified in
+`evidence/original_tests.sha256`).
 
 **2. The adapter is thin — and the one place it wasn't, we found and fixed
 a bug in it.** The adapter's job is routing: every `natsorted`-family call
@@ -84,8 +85,9 @@ else. `fuzz/harness_index.py` now differentially tests this function directly
 `random.Random(20260731)`; `cli_difftest.py` uses `random.Random(2024)`;
 `fuzz/harness_index.py` uses `random.Random(99)`. Every run with the same
 seed and round count reproduces the identical corpus — anyone can re-run
-`python3 fuzz/harness.py 3000` and get the exact same 21,000 comparisons.
-3,000 edge-weighted string lists × 7 algorithms = **21,000 comparisons
+`python3 fuzz/harness.py 3000` and get the exact same 27,000 comparisons.
+3,000 edge-weighted string lists × 9 algorithms (including NOEXP and
+PRESORT) = **27,000 comparisons
 against the live Python library, 0 divergences**.
 
 **4. CLI differential.** 2,800 CLI invocations (`sort` + `compare` across 7
@@ -96,7 +98,7 @@ algorithms) vs Python natsort, **0 divergences** (`cli_difftest.py`, seed
 reflexivity, transitivity, permutation-preservation, and panic-freedom on
 adversarial REAL input.
 
-**6. Native tests.** 44 Rust tests (39 unit/API/property in `src/lib.rs` + 5
+**6. Native tests.** 46 Rust tests (41 unit/API/property in `src/lib.rs` + 5
 CLI contract tests in `src/main.rs`), each a regression guard for a
 specific behavior found while porting (e.g. `1.e133` exponent-after-dot, bare
 `e` as text, signed-zero tie ordering).
@@ -127,7 +129,7 @@ This port matches natsort's Unicode handling completely:
 - **Numeric non-digits** (Roman numerals Ⅷ, fractions ½, circled tens ⑩) are numbers under REAL/FLOAT, text under INT — exactly as natsort does.
 - **NFD normalization** and **casefolding** (ß→ss, ﬁ→fi, ς→σ) match Python's, so IGNORECASE / GROUPLETTERS / accented text sort identically.
 
-Verified: **21,000 comparisons across the full Unicode character set (all 7 algorithms) — 0 divergences.**
+Verified: **27,000 comparisons across the full Unicode character set (all 9 algorithms, including NOEXP and PRESORT) — 0 divergences.**
 
 ## Use as a library
 

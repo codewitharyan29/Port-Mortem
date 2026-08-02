@@ -274,3 +274,32 @@
     comparison behavior without failing to compile (integer/text/float
     comparison direction, the length tiebreak, sign negation) -- a targeted
     check that the tests have teeth, not a claim of exhaustive coverage.
+
+32. **Added ns.NOEXP and ns.PRESORT — two features initially left out of scope,
+    implemented after review.** Both were straightforward to port and had
+    genuine test coverage waiting for them:
+    - NOEXP: disables exponent parsing under REAL/FLOAT ("1e5" stays as
+      mantissa 1.0 + text "e" + number 5.0, instead of parsing to 100000.0).
+      A single-line gate in the exponent-consuming branch of match_number().
+    - PRESORT: pre-sorts the input lexicographically (stable) before the
+      natural sort, so ties in the natural key (e.g. "a1" and "a01", both
+      -> ("a", 1)) break by string order instead of by original input
+      position. Implemented in natsorted_alg, index_natsorted_alg, and a new
+      os_sorted_presort/index_os_sorted_presort pair; os_sorted's adapter
+      signature gained a `presort=False` keyword to match Python's own
+      os_sorted(..., presort=False) parameter (not an alg flag there).
+
+    Both verified with dedicated differential tests (0 divergences each) and
+    native unit tests, then added to the permanent fuzz corpus (fuzz/harness.py
+    now tests 9 algorithms, 27,000 comparisons total, still 0 divergences).
+    This raised the original test pass count from 28/63 to 33/63 -- the 5
+    newly-passing tests were previously excluded for reasons that no longer
+    apply, not for reasons still valid. A stale conftest.py exclusion
+    ("16384-expected1", referencing a parametrize ID from an earlier version
+    of the test file that no longer exists) was also found and removed while
+    verifying this.
+
+    ns.PATH (filesystem-path heuristics) remains out of scope -- it is a
+    materially larger feature (path-separator-aware splitting, extension
+    handling) rather than a single flag, and was judged lower value per unit
+    of remaining time than polishing what was already built.

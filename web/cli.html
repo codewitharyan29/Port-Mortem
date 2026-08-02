@@ -213,6 +213,8 @@
       <div class="flag-row"><code>--ignorecase</code><span>Fold case before comparing (uses casefold, not lowercase)</span></div>
       <div class="flag-row"><code>--lowercasefirst</code><span>Swap the case of every letter before comparing</span></div>
       <div class="flag-row"><code>--groupletters</code><span>Expand each letter to casefold(c) + c</span></div>
+      <div class="flag-row"><code>--noexp</code><span>Under REAL/FLOAT, don't treat e/E + digits as an exponent -- "1e5" stays 1.0, "e", 5.0</span></div>
+      <div class="flag-row"><code>--presort</code><span>Pre-sort lexicographically first, so ties in the natural key break by string order, not input order</span></div>
     </div>
     <p style="color:var(--muted);font-size:13px;margin-top:14px"><code>batch-sort</code> takes the same
     flags as comma-separated words in the line's first field instead: <code>real,ignorecase</code>.</p>
