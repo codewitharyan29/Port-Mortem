@@ -29,6 +29,8 @@ ALGS = [
     ("ignorecase", ["ignorecase"], ns.IGNORECASE),
     ("lowercasefirst", ["lowercasefirst"], ns.LOWERCASEFIRST),
     ("groupletters", ["groupletters"], ns.GROUPLETTERS),
+    ("real_noexp", ["real", "noexp"], ns.REAL | ns.NOEXP),
+    ("presort", ["presort"], ns.PRESORT),
 ]
 
 ALPHABET = "abABxyz0123456789.-+eE"
@@ -60,7 +62,11 @@ def main():
             "Ⅷ", "½", "¼", "⑩", "Ⅷ0.E",
             # Casefold-special characters (differ from simple to_lowercase) --
             # exercised under IGNORECASE/GROUPLETTERS.
-            "ß", "ﬁ", "ς", "İ", "ẞ2", "Σﬁ"]
+            "ß", "ﬁ", "ς", "İ", "ẞ2", "Σﬁ",
+            # Tie-forcing pairs (same natural key, different string) -- these
+            # are what makes ns.PRESORT observably different from a plain
+            # stable sort: "a1"/"a01" both -> ("a", 1).
+            "a1", "a01", "a001", "b2", "b02"]
 
     def gen():
         if rng.random() < 0.25:

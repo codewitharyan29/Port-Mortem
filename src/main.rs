@@ -13,6 +13,8 @@ fn parse_alg(args: &[String]) -> Ns {
             "--ignorecase" => alg.ignorecase = true,
             "--lowercasefirst" => alg.lowercasefirst = true,
             "--groupletters" => alg.groupletters = true,
+            "--noexp" => alg.noexp = true,
+            "--presort" => alg.presort = true,
             _ => {}
         }
     }
@@ -55,6 +57,8 @@ fn alg_from_spec(spec: &str) -> Ns {
             "ignorecase" => a.ignorecase = true,
             "lowercasefirst" => a.lowercasefirst = true,
             "groupletters" => a.groupletters = true,
+            "noexp" => a.noexp = true,
+            "presort" => a.presort = true,
             _ => {}
         }
     }
@@ -79,9 +83,12 @@ fn main() -> ExitCode {
         }
         Some("os-sort") => {
             // os_sorted: case-insensitive natural order (a superset default).
+            // Accepts an optional --presort flag, matching os_sorted(presort=True).
+            let presort = args.get(2).map(|s| s == "--presort").unwrap_or(false);
             let stdin = io::stdin();
             let lines: Vec<String> = stdin.lock().lines().map_while(Result::ok).collect();
-            for line in natsort_core::os_sorted(&lines) {
+            let sorted = natsort_core::os_sorted_presort(&lines, presort);
+            for line in sorted {
                 println!("{line}");
             }
             ExitCode::SUCCESS

@@ -48,6 +48,11 @@ pub struct Ns {
     pub lowercasefirst: bool,
     /// Expand each letter to lowercase-then-original. `ns.GROUPLETTERS`.
     pub groupletters: bool,
+    /// Do not treat a trailing e/E + digits as a float exponent. `ns.NOEXP`.
+    pub noexp: bool,
+    /// Presort the sequence lexicographically before the natural sort, so
+    /// ties break by string order instead of original input order. `ns.PRESORT`.
+    pub presort: bool,
 }
 
 impl Ns {
@@ -59,6 +64,8 @@ impl Ns {
         ignorecase: false,
         lowercasefirst: false,
         groupletters: false,
+        noexp: false,
+        presort: false,
     };
 
     /// `ns.REAL`: signed floats.
@@ -225,8 +232,9 @@ fn match_number(chars: &[char], start: usize, alg: Ns) -> Option<(Chunk, usize)>
             return None;
         }
         let mut end = if has_frac_dot { frac_end } else { i };
-        // Exponent: e/E, optional sign, then at least one digit.
-        if end < n && (chars[end] == 'e' || chars[end] == 'E') {
+        // Exponent: e/E, optional sign, then at least one digit -- unless
+        // ns.NOEXP says to treat 'e'/'E' as ordinary text instead.
+        if !alg.noexp && end < n && (chars[end] == 'e' || chars[end] == 'E') {
             let mut j = end + 1;
             if j < n && (chars[j] == '+' || chars[j] == '-') {
                 j += 1;
@@ -381,8 +389,19 @@ pub fn natsorted(items: &[String]) -> Vec<String> {
 /// comparison -- O(n log n) redundant parsing -- which is what Python's
 /// `sorted(seq, key=...)` avoids and what this port now matches.
 pub fn natsorted_alg(items: &[String], alg: Ns) -> Vec<String> {
+    // ns.PRESORT: sort lexicographically first (stable), so that ties in the
+    // natural key (e.g. "a1" and "a01", both -> ("a", 1)) break by string
+    // order rather than by original input order. Matches natsort exactly:
+    // `if alg & ns.PRESORT: seq = sorted(seq, key=str)` before the real sort.
+    let base: Vec<&String> = if alg.presort {
+        let mut v: Vec<&String> = items.iter().collect();
+        v.sort();
+        v
+    } else {
+        items.iter().collect()
+    };
     let mut decorated: Vec<(Vec<Chunk>, &String)> =
-        items.iter().map(|s| (natsort_key(s, alg), s)).collect();
+        base.into_iter().map(|s| (natsort_key(s, alg), s)).collect();
     decorated.sort_by(|a, b| compare_keys(&a.0, &b.0));
     decorated.into_iter().map(|(_, s)| s.clone()).collect()
 }
@@ -410,8 +429,14 @@ pub fn index_natsorted(items: &[String]) -> Vec<usize> {
 
 /// Indices that would sort `items` naturally under `alg` (stable).
 pub fn index_natsorted_alg(items: &[String], alg: Ns) -> Vec<usize> {
-    let keys: Vec<Vec<Chunk>> = items.iter().map(|s| natsort_key(s, alg)).collect();
     let mut idx: Vec<usize> = (0..items.len()).collect();
+    // Same PRESORT semantics as natsorted_alg, but operating on indices: a
+    // preliminary stable sort by string value, THEN the stable natural sort,
+    // so ties break by lexicographic order.
+    if alg.presort {
+        idx.sort_by(|&a, &b| items[a].cmp(&items[b]));
+    }
+    let keys: Vec<Vec<Chunk>> = items.iter().map(|s| natsort_key(s, alg)).collect();
     idx.sort_by(|&a, &b| compare_keys(&keys[a], &keys[b]));
     idx
 }
@@ -495,14 +520,31 @@ pub fn natsorted_reverse(items: &[String], alg: Ns, reverse: bool) -> Vec<String
 /// locale and applies path-aware splitting; those are the documented scope
 /// boundary, so this implements the common locale-independent behavior.)
 pub fn os_sorted(items: &[String]) -> Vec<String> {
+    os_sorted_presort(items, false)
+}
+
+/// `os_sorted(seq, presort=True)` — same as `os_sorted`, but pre-sorts
+/// lexicographically first so ties break by string order, not input order.
+pub fn os_sorted_presort(items: &[String], presort: bool) -> Vec<String> {
     let mut out = items.to_vec();
+    if presort {
+        out.sort();
+    }
     out.sort_by(|a, b| human_cmp(a, b));
     out
 }
 
 /// Indices that would sort `items` via `os_sorted` (stable).
 pub fn index_os_sorted(items: &[String]) -> Vec<usize> {
+    index_os_sorted_presort(items, false)
+}
+
+/// Indices version of `os_sorted_presort`.
+pub fn index_os_sorted_presort(items: &[String], presort: bool) -> Vec<usize> {
     let mut idx: Vec<usize> = (0..items.len()).collect();
+    if presort {
+        idx.sort_by(|&a, &b| items[a].cmp(&items[b]));
+    }
     idx.sort_by(|&a, &b| human_cmp(&items[a], &items[b]));
     idx
 }
@@ -641,6 +683,31 @@ mod tests {
         assert_eq!(
             k,
             vec![Chunk::Text("".into()), Chunk::Real(7.0), Chunk::Text("e".into())]
+        );
+    }
+
+    #[test]
+    fn presort_breaks_ties_lexicographically_not_by_input_order() {
+        // "a1" and "a01" share the same natural key ("a", 1). Without
+        // presort, a stable sort keeps input order for the tie. With
+        // presort, ties break by plain string order instead.
+        let items = vec!["a1".to_string(), "a01".to_string()];
+        let alg = Ns { presort: true, ..Ns::DEFAULT };
+        assert_eq!(natsorted_alg(&items, alg), vec!["a01", "a1"]);
+        // Without presort, input order (a1 first) is preserved for the tie.
+        assert_eq!(natsorted_alg(&items, Ns::DEFAULT), vec!["a1", "a01"]);
+    }
+
+    #[test]
+    fn noexp_treats_e_as_literal_text() {
+        // Under REAL, "1e5" is normally 100000.0. With NOEXP, the 'e' does
+        // NOT start an exponent -- it's parsed as mantissa 1.0, text "e",
+        // then a separate number 5.0, matching Python's ns.NOEXP.
+        let alg = Ns { noexp: true, ..Ns::real() };
+        let k = natsort_key("1e5", alg);
+        assert_eq!(
+            k,
+            vec![Chunk::Text("".into()), Chunk::Real(1.0), Chunk::Text("e".into()), Chunk::Real(5.0)]
         );
     }
 

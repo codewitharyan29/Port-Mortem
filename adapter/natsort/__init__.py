@@ -72,6 +72,10 @@ def _flags_to_spec(alg):
         parts.append("lowercasefirst")
     if alg & ns.GROUPLETTERS:
         parts.append("groupletters")
+    if alg & ns.NOEXP:
+        parts.append("noexp")
+    if alg & ns.PRESORT:
+        parts.append("presort")
     return ",".join(parts) if parts else "int"
 
 
@@ -190,12 +194,12 @@ def chain_functions(functions):
 
 
 
-def os_sorted(seq, key=None, reverse=False):
+def os_sorted(seq, key=None, reverse=False, presort=False):
     """Order like a typical OS file manager: case-insensitive natural sort."""
     seq = list(seq)
     if key is not None:
         vals = [str(key(x)) for x in seq]
-        order = _rust_os_sort(vals)
+        order = _rust_os_sort(vals, presort)
         used = [False]*len(seq)
         out = []
         for v in order:
@@ -203,7 +207,7 @@ def os_sorted(seq, key=None, reverse=False):
                 if not used[i] and vv == v:
                     out.append(seq[i]); used[i]=True; break
         return out[::-1] if reverse else out
-    out = _rust_os_sort([str(x) for x in seq])
+    out = _rust_os_sort([str(x) for x in seq], presort)
     return out[::-1] if reverse else out
 
 
@@ -215,8 +219,9 @@ def os_sort_keygen(key=None):
     return (key or (lambda x: x))
 
 
-def _rust_os_sort(items):
-    out = subprocess.run([_BIN, "os-sort"], input="\n".join(items)+"\n",
+def _rust_os_sort(items, presort=False):
+    args = [_BIN, "os-sort"] + (["--presort"] if presort else [])
+    out = subprocess.run(args, input="\n".join(items)+"\n",
                          capture_output=True, text=True, encoding="utf-8")
     if out.returncode != 0:
         raise RuntimeError(out.stderr)

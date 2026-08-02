@@ -10,7 +10,6 @@ unrelated to sort behavior:
   384-expected4    - combined LOWERCASEFIRST|GROUPLETTERS (beyond ported core)
   os_sorted_corpus - requires a real OS locale
   os_sorted_compound - requires OS filesystem path semantics
-  16384-expected1  - ns.PRESORT param of odd_collection (not ported)
 """
 
 
