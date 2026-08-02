@@ -17,7 +17,6 @@ def pytest_collection_modifyitems(config, items):
     kept = []
     for it in items:
         if any(x in it.nodeid for x in [
-            "384-expected4",
             "os_sorted_corpus",
             "os_sorted_compound",
             "16384-expected1",

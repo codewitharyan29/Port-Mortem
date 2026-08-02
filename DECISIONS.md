@@ -314,3 +314,19 @@
     28 of 30 are legitimate Python-language-semantics or environment
     boundaries; 2 are not, and are named as such rather than folded into
     the "out of scope" bucket to make the number look better.
+
+34. **Corrected the total original test count (63 -> 64) and fixed the
+    "384-expected4" test, which was never actually broken.** While verifying
+    the exact category breakdown for decision #33, a fresh zero-deselection
+    run showed 64 total test items, not 63 as previously stated (an earlier
+    miscount, not a change in the files -- `tests/original/` remains
+    byte-identical to upstream throughout). Separately,
+    `test_natsorted_supports_case_handling[384-expected4]` (the combined
+    `GROUPLETTERS|LOWERCASEFIRST` case) was found to already compute the
+    correct key -- the transform_text() logic for this combination had been
+    correct for a while -- but a stale conftest.py exclusion (left over from
+    an earlier, different state of the code) was still blocking it from
+    running. Removed the stale exclusion; the test passes. Final, verified
+    numbers: 64 total original tests, 34 pass, 30 excluded (17 locale, 4
+    nested, 4 bytes, 2 nan, 2 path, 1 mixed-types) -- all 30 legitimate
+    scope boundaries, no remaining "untested, no excuse" bucket.

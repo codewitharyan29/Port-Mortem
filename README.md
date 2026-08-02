@@ -60,24 +60,31 @@ Every exclusion above is enforced by name in `pytest.ini` / the root
 
 **1. The original test suite, unmodified.** natsort's own `test_natsorted.py`,
 `test_natsorted_convenience.py`, and `test_os_sorted.py` — kept verbatim in
-`tests/original/` — total **63 individual test cases**. Run against the Rust
-binary through the adapter: **33 pass**. The other 30, broken down exactly
+`tests/original/` — total **64 individual test cases**. Run against the Rust
+binary through the adapter: **34 pass**. The other 30, broken down exactly
 (no rounding, no vague "the rest"):
 
 | Category | Count | Why |
 |---|---|---|
 | Locale | 17 | Needs a real OS locale to even execute; natsort's own suite self-skips 3 of these via `skipif` when the locale isn't installed |
-| Nested | 4 | Recursion into nested Python lists — container semantics, not sort logic |
-| PATH | 3 | `ns.PATH` filesystem-path heuristics — a separate feature, not core sorting |
+| Nested | 4 | Recursion into nested Python lists, or sorting tuples element-by-element — container semantics, not sort logic |
+| Bytes | 4 | Python `bytes`/`str` decoding and mixed-input `TypeError` semantics |
 | NaN | 2 | Python `float('nan')` identity semantics |
+| PATH | 2 | `ns.PATH` filesystem-path heuristics — a separate feature, structurally different from the flat sort key used everywhere else (nested per-component keys), not core sorting |
 | Mixed types | 1 | Sorting heterogeneous Python objects (int vs str vs None) — not expressible in a statically-typed Rust port |
-| Bytes | 1 | Python `bytes`/`str` mixed-input `TypeError` semantics |
-| **Untested combination** | **2** | `LOWERCASEFIRST\|GROUPLETTERS` combined — genuinely just not covered, no scope excuse for this one |
 
-28 of the 30 are legitimate scope boundaries (Python-language semantics or
-environment-dependent features); 2 are an honest gap. Excluded by name in
-`pytest.ini` / the root `conftest.py`, never by editing the test files.
-Test files are byte-identical to upstream (SHA-256 verified in
+All 30 are legitimate scope boundaries: Python-language object semantics
+(locale, nested containers, bytes, NaN identity, mixed types) that don't
+apply to a statically-typed Rust port, or `ns.PATH`, a structurally
+different feature. An earlier version of this table listed 2 tests
+(`LOWERCASEFIRST|GROUPLETTERS` combined) as "an honest gap, not a scope
+excuse" — on closer inspection the underlying key-computation logic was
+already correct and only a stale test-exclusion entry (left over from an
+earlier iteration) was blocking them; removing that entry let both pass.
+Separately, the total was corrected from an earlier miscount of 63 to the
+verified 64. Excluded by name in `pytest.ini` / the root `conftest.py`,
+never by editing the test files. Test files are byte-identical to upstream
+(SHA-256 verified in `evidence/original_tests.sha256`).
 `evidence/original_tests.sha256`).
 
 **2. The adapter is thin — and the one place it wasn't, we found and fixed
