@@ -1,0 +1,10 @@
+include LICENSE
+include CHANGELOG.md
+include tox.ini
+include RELEASING.md
+recursive-include mypy_stubs *.pyi
+graft dev
+graft docs
+graft natsort
+graft tests
+global-exclude *.py[cod] __pycache__ *.so
