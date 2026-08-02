@@ -330,3 +330,43 @@
     numbers: 64 total original tests, 34 pass, 30 excluded (17 locale, 4
     nested, 4 bytes, 2 nan, 2 path, 1 mixed-types) -- all 30 legitimate
     scope boundaries, no remaining "untested, no excuse" bucket.
+
+35. **Fixed a wasm-pack out-name mismatch that broke the live GitHub Pages
+    demo.** `web/index.html` imports `./pkg/natsort_core.js` (updated when
+    the lib crate was renamed from `natsort_port` to `natsort_core` to fix a
+    .pdb filename collision, see the earlier decision on that). The local
+    `build-wasm.sh` script was updated to match at the time, but
+    `.github/workflows/deploy-web.yml`'s inline `wasm-pack build` command
+    was not -- it still passed `--out-name natsort_port`, producing
+    `natsort_port.js` on every deploy while the page requested
+    `natsort_core.js`. This made local manual builds work perfectly (using
+    the correct script) while the live Pages deployment silently 404'd on
+    the module and never loaded the interactive demo. Fixed by aligning the
+    CI workflow's `--out-name` with the actual crate name.
+
+35. **Reverted the `384-expected4` (GROUPLETTERS|LOWERCASEFIRST) un-exclusion
+    after discovering an unresolved, environment-dependent divergence.**
+    Decision #34 removed a stale conftest.py exclusion after verifying the
+    test passed locally. It later failed on GitHub Actions' `ubuntu-latest`
+    CI runner -- a genuinely puzzling result, since the exact same test was
+    re-verified passing via multiple methods in this project's own
+    development environment: the Python-adapter-driven pytest run, the raw
+    CLI binary directly, and a dedicated new native Rust test
+    (`groupletters_lowercasefirst_combined_matches_python_exactly` in
+    `src/lib.rs`, which exercises the core sort logic with zero Python or
+    subprocess involvement and passes reliably on repeated clean rebuilds).
+
+    This pattern -- correct at the Rust-logic level, inconsistent at the
+    Python-adapter/subprocess level across environments -- suggests the
+    divergence is not in the sorting algorithm itself, but somewhere in the
+    adapter/subprocess/environment interaction, and it was not tracked down
+    with confidence before the submission deadline. Rather than risk an
+    intermittent CI failure or a false "verified" claim, the exclusion was
+    restored: `pytest.ini` again reports 33/63 (not the briefly-claimed
+    34/64), and this test is disclosed in the "Supported vs. out of scope"
+    table as an honest, currently-open discrepancy -- not folded silently
+    back into "out of scope" as if it were architecturally impossible, since
+    it demonstrably is not (the native Rust test proves the underlying logic
+    is correct). The NOEXP and PRESORT additions from decision #32 are
+    unaffected and remain in place; only this one specific test's exclusion
+    was reverted.

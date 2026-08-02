@@ -153,7 +153,22 @@ fn transform_text(text: &str, alg: Ns) -> String {
                     out.push(lc);
                 }
             }
-            out.push(c);
+            // When LOWERCASEFIRST is combined with GROUPLETTERS, the second
+            // half is swapcase(c) instead of c itself -- verified against
+            // Python: 'A' -> "aa" (casefold + swapcase, both lowercase 'a'),
+            // 'a' -> "aA" (casefold 'a' + swapcase 'A'). Plain GROUPLETTERS
+            // alone keeps the second half as the original c ('A' -> "aA").
+            if alg.lowercasefirst {
+                if c.is_uppercase() {
+                    out.extend(c.to_lowercase());
+                } else if c.is_lowercase() {
+                    out.extend(c.to_uppercase());
+                } else {
+                    out.push(c);
+                }
+            } else {
+                out.push(c);
+            }
         } else if alg.ignorecase {
             // natsort uses str.casefold() for IGNORECASE, which is more
             // aggressive than lowercasing (ß->ss, ﬁ->fi, ς->σ, ...).
@@ -645,6 +660,18 @@ mod tests {
         let alg = Ns { ignorecase: true, ..Ns::DEFAULT };
         let k = natsort_key("Num10", alg);
         assert_eq!(k, vec![Chunk::Text("num".into()), Chunk::Int(10)]);
+    }
+
+    #[test]
+    fn groupletters_lowercasefirst_combined_matches_python_exactly() {
+        // Exact real-world regression case: natsort's own fruit_list fixture
+        // sorted under GROUPLETTERS|LOWERCASEFIRST combined. Verified against
+        // live Python natsort output.
+        let alg = Ns { groupletters: true, lowercasefirst: true, ..Ns::DEFAULT };
+        let given: Vec<String> = ["Apple", "corn", "Corn", "Banana", "apple", "banana"]
+            .iter().map(|s| s.to_string()).collect();
+        let result = natsorted_alg(&given, alg);
+        assert_eq!(result, vec!["apple", "Apple", "banana", "Banana", "corn", "Corn"]);
     }
 
     #[test]

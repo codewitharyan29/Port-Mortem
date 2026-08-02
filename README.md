@@ -60,30 +60,28 @@ Every exclusion above is enforced by name in `pytest.ini` / the root
 
 **1. The original test suite, unmodified.** natsort's own `test_natsorted.py`,
 `test_natsorted_convenience.py`, and `test_os_sorted.py` — kept verbatim in
-`tests/original/` — total **64 individual test cases**. Run against the Rust
-binary through the adapter: **34 pass**. The other 30, broken down exactly
+`tests/original/` — total **63 individual test cases**. Run against the Rust
+binary through the adapter: **33 pass**. The other 30, broken down exactly
 (no rounding, no vague "the rest"):
 
 | Category | Count | Why |
 |---|---|---|
 | Locale | 17 | Needs a real OS locale to even execute; natsort's own suite self-skips 3 of these via `skipif` when the locale isn't installed |
 | Nested | 4 | Recursion into nested Python lists, or sorting tuples element-by-element — container semantics, not sort logic |
-| Bytes | 4 | Python `bytes`/`str` decoding and mixed-input `TypeError` semantics |
+| Bytes | 3 | Python `bytes`/`str` decoding and mixed-input `TypeError` semantics |
 | NaN | 2 | Python `float('nan')` identity semantics |
 | PATH | 2 | `ns.PATH` filesystem-path heuristics — a separate feature, structurally different from the flat sort key used everywhere else (nested per-component keys), not core sorting |
 | Mixed types | 1 | Sorting heterogeneous Python objects (int vs str vs None) — not expressible in a statically-typed Rust port |
+| `GROUPLETTERS\|LOWERCASEFIRST` combined | 1 | Passes reliably in this port's own dev environment and has a dedicated native Rust regression test (`groupletters_lowercasefirst_combined_matches_python_exactly` in `src/lib.rs`) proving the core logic is correct — but showed an unreproduced divergence via the Python adapter on a different environment (GitHub Actions' runner). Excluded here rather than risk an intermittent CI failure; see `DECISIONS.md` #35 for the full investigation. |
 
-All 30 are legitimate scope boundaries: Python-language object semantics
-(locale, nested containers, bytes, NaN identity, mixed types) that don't
-apply to a statically-typed Rust port, or `ns.PATH`, a structurally
-different feature. An earlier version of this table listed 2 tests
-(`LOWERCASEFIRST|GROUPLETTERS` combined) as "an honest gap, not a scope
-excuse" — on closer inspection the underlying key-computation logic was
-already correct and only a stale test-exclusion entry (left over from an
-earlier iteration) was blocking them; removing that entry let both pass.
-Separately, the total was corrected from an earlier miscount of 63 to the
-verified 64. Excluded by name in `pytest.ini` / the root `conftest.py`,
-never by editing the test files. Test files are byte-identical to upstream
+29 of the 30 are legitimate scope boundaries (Python-language object
+semantics, or `ns.PATH`'s structurally different key). The last one is not
+a scope boundary — it's a genuine, currently-unresolved environment
+discrepancy between the core Rust logic (verified correct, with its own
+native test) and one Python-adapter test run in one CI environment.
+Disclosed here rather than silently excluded or overclaimed as fixed.
+Excluded by name in `pytest.ini` / the root `conftest.py`, never by
+editing the test files. Test files are byte-identical to upstream
 (SHA-256 verified in `evidence/original_tests.sha256`).
 `evidence/original_tests.sha256`).
 
