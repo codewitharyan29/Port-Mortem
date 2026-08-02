@@ -175,8 +175,8 @@ py -m pytest -q</code></pre>
 <pre><code>pip install pytest hypothesis
 PYTHONPATH=adapter python3 -m pytest -q</code></pre>
     </div>
-    <div class="expect"><b>Expect</b><span><code>28 passed, 35 deselected</code></span></div>
-    <div class="note"><b>Why deselected</b><span>Each of the 35 tests genuinely out-of-scope tests
+    <div class="expect"><b>Expect</b><span><code>33 passed, 30 deselected</code></span></div>
+    <div class="note"><b>Why deselected</b><span>Each of the 30 tests genuinely out-of-scope tests
     (OS locale, PRESORT chaining, Python nan/bytes semantics) is excluded by name with a documented
     reason in <code>pytest.ini</code> and the root <code>conftest.py</code> — never edited silently.
     Verify the test files themselves are untouched: <code>sha256sum -c evidence/original_tests.sha256</code>
@@ -187,11 +187,13 @@ PYTHONPATH=adapter python3 -m pytest -q</code></pre>
     <div class="step-head"><span class="step-num">05</span><span class="step-title">Differential fuzz</span></div>
     <p class="step-desc">Random inputs across the full Unicode character set, compared against the
     live Python library.</p>
-    <pre><code>python3 fuzz/harness.py 3000</code></pre>
+    <div data-os="win" class="shown"><pre><code>py fuzz\harness.py 3000</code></pre></div>
+    <div data-os="unix"><pre><code>python3 fuzz/harness.py 3000</code></pre></div>
     <div class="expect"><b>Expect</b><span><code>TOTAL DIVERGENCES: 0</code> (21,000 comparisons, 7 algorithms)</span></div>
     <p class="step-desc" style="margin-top:18px">For the continuous 60-second Fuzz Survivor run
     (published log at <code>evidence/fuzz_60s_log.txt</code>):</p>
-    <pre><code>python3 fuzz/harness_60s.py 60</code></pre>
+    <div data-os="win" class="shown"><pre><code>py fuzz\harness_60s.py 60</code></pre></div>
+    <div data-os="unix"><pre><code>python3 fuzz/harness_60s.py 60</code></pre></div>
     <div class="expect"><b>Expect</b><span><code>RESULT: 60.0s continuous run ... TOTAL DIVERGENCES: 0</code></span></div>
   </div>
 
@@ -199,8 +201,10 @@ PYTHONPATH=adapter python3 -m pytest -q</code></pre>
     <div class="step-head"><span class="step-num">06</span><span class="step-title">CLI differential + mutation testing</span></div>
     <p class="step-desc">Every CLI invocation compared to Python's CLI; deliberate bugs injected
     to confirm the test suite actually catches regressions.</p>
-    <pre><code>python3 cli_difftest.py 200
-python3 mutation_test.py</code></pre>
+    <div data-os="win" class="shown"><pre><code>py cli_difftest.py 200
+py mutation_test.py</code></pre></div>
+    <div data-os="unix"><pre><code>python3 cli_difftest.py 200
+python3 mutation_test.py</code></pre></div>
     <div class="expect"><b>Expect</b><span><code>2,800 invocations, 0 divergences</code> and <code>MUTATION SCORE: 5/5</code></span></div>
   </div>
 
@@ -217,7 +221,8 @@ cargo llvm-cov --release --summary-only</code></pre>
     <div class="step-head"><span class="step-num">08</span><span class="step-title">Benchmark</span></div>
     <p class="step-desc">Honest numbers: mean, p50, p95, p99 latency and peak RSS — not just
     hot-loop throughput.</p>
-    <pre><code>python3 bench/run.py 50000 15</code></pre>
+    <div data-os="win" class="shown"><pre><code>py bench\run.py 50000 15</code></pre></div>
+    <div data-os="unix"><pre><code>python3 bench/run.py 50000 15</code></pre></div>
     <div class="expect"><b>Expect</b><span>~6.8x mean speedup, ~7.3x p99 speedup (exact numbers vary by machine — see <code>evidence/bench_results.txt</code> for the reference run)</span></div>
   </div>
 
@@ -242,8 +247,10 @@ cargo install wasm-pack</code></pre>
 
     <p style="color:var(--muted);font-size:13px;margin:14px 0 6px">Then serve — WASM does not
     load over a bare <code>file://</code> URL, it needs an actual HTTP server:</p>
-    <pre><code>cd web
-python3 -m http.server 8000</code></pre>
+    <div data-os="win" class="shown"><pre><code>cd web
+py -m http.server 8000</code></pre></div>
+    <div data-os="unix"><pre><code>cd web
+python3 -m http.server 8000</code></pre></div>
     <div class="expect"><b>Expect</b><span>Open <code>http://localhost:8000</code> in a browser
     (not double-clicking <code>index.html</code>) — the amber "module not found" warning
     disappears and Sort/Shuffle become live.</span></div>
