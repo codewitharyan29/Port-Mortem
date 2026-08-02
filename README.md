@@ -16,6 +16,11 @@ git clone https://github.com/codewitharyan29/Port-Mortem.git
 cd Port-Mortem
 ```
 
+> **Platform note:** commands throughout this README use `python3` (Linux/
+> macOS convention). On Windows, substitute `py` everywhere you see
+> `python3` (e.g. `py fuzz/harness.py 3000`). Full OS-specific, tabbed
+> instructions are in `web/verify.html`.
+
 ## What it does
 
 natsort orders strings the way people expect: `["num2", "num10"]` rather than
@@ -72,17 +77,17 @@ binary through the adapter: **33 pass**. The other 30, broken down exactly
 | NaN | 2 | Python `float('nan')` identity semantics |
 | PATH | 2 | `ns.PATH` filesystem-path heuristics — a separate feature, structurally different from the flat sort key used everywhere else (nested per-component keys), not core sorting |
 | Mixed types | 1 | Sorting heterogeneous Python objects (int vs str vs None) — not expressible in a statically-typed Rust port |
-| `GROUPLETTERS\|LOWERCASEFIRST` combined | 1 | Passes reliably in this port's own dev environment and has a dedicated native Rust regression test (`groupletters_lowercasefirst_combined_matches_python_exactly` in `src/lib.rs`) proving the core logic is correct — but showed an unreproduced divergence via the Python adapter on a different environment (GitHub Actions' runner). Excluded here rather than risk an intermittent CI failure; see `DECISIONS.md` #35 for the full investigation. |
+| `GROUPLETTERS\|LOWERCASEFIRST` combined | 1 | Known adapter-level discrepancy under one CI environment. The core Rust implementation is covered by a dedicated native regression test (`groupletters_lowercasefirst_combined_matches_python_exactly` in `src/lib.rs`), but one upstream adapter-driven test showed an environment-specific inconsistency that could not be reproduced locally before the deadline. Excluded explicitly rather than claiming support; see `DECISIONS.md` #36. |
 
 29 of the 30 are legitimate scope boundaries (Python-language object
-semantics, or `ns.PATH`'s structurally different key). The last one is not
-a scope boundary — it's a genuine, currently-unresolved environment
-discrepancy between the core Rust logic (verified correct, with its own
-native test) and one Python-adapter test run in one CI environment.
-Disclosed here rather than silently excluded or overclaimed as fixed.
-Excluded by name in `pytest.ini` / the root `conftest.py`, never by
-editing the test files. Test files are byte-identical to upstream
-(SHA-256 verified in `evidence/original_tests.sha256`).
+semantics, or `ns.PATH`'s structurally different key). The last one is a
+known, explicitly-excluded discrepancy at the adapter level, not a claim
+that the underlying algorithm is unverified — the core logic has its own
+passing native test independent of Python entirely. Disclosed here rather
+than silently excluded or overclaimed as fixed. Excluded by name in
+`pytest.ini` / the root `conftest.py`, never by editing the test files.
+Test files are byte-identical to upstream (SHA-256 verified in
+`evidence/original_tests.sha256`).
 `evidence/original_tests.sha256`).
 
 **2. The adapter is thin — and the one place it wasn't, we found and fixed
@@ -262,10 +267,13 @@ publishes both to GitHub Pages on push.
 
 ## Verify it yourself
 
+Step-by-step instructions with Windows/Unix tabs are in `web/verify.html`;
+this is the quick version (see the platform note above for `python3` vs `py`).
+
 ```bash
 cargo build --release
 cargo test --release                       # 44 native tests
-PYTHONPATH=adapter python3 -m pytest -q    # 28 original tests
+PYTHONPATH=adapter python3 -m pytest -q    # 33 original tests
 python3 fuzz/harness.py 3000                # 0 divergences
 ```
 

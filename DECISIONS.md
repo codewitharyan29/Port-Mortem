@@ -344,7 +344,7 @@
     the module and never loaded the interactive demo. Fixed by aligning the
     CI workflow's `--out-name` with the actual crate name.
 
-35. **Reverted the `384-expected4` (GROUPLETTERS|LOWERCASEFIRST) un-exclusion
+36. **Reverted the `384-expected4` (GROUPLETTERS|LOWERCASEFIRST) un-exclusion
     after discovering an unresolved, environment-dependent divergence.**
     Decision #34 removed a stale conftest.py exclusion after verifying the
     test passed locally. It later failed on GitHub Actions' `ubuntu-latest`
@@ -371,7 +371,7 @@
     unaffected and remain in place; only this one specific test's exclusion
     was reverted.
 
-36. **Fixed a silently-broken WASM deployment: the workflow reported "success"
+37. **Fixed a silently-broken WASM deployment: the workflow reported "success"
     while actually deploying a 404.** The live GitHub Pages demo showed the
     "module not found" warning and a browser console 404 for
     `pkg/natsort_core.js`, despite the "Deploy web demo" Actions run being
